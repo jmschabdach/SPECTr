@@ -1,6 +1,7 @@
 import SimpleITK as sitk
 import numpy as np
 import math
+import argparse
 from boldli import ImageManipulatingLibrary as mil
 
 ##
@@ -150,11 +151,38 @@ def delta(mean=0.0, std=1.0):
     change = np.random.normal(mean, std)
     return change
 
+##
+# Write a line to a file
+#
+# @param fn String representing the filename
+# @param line The line to write as a string
+def updateFile(fn, line):
+    # Add a newline character if line does not end with one
+    if not line.endswith("\n"):
+        line = line + "\n"
+
+    # Write the line to the file
+    with open(fn, "a+") as f:
+        f.write(line)
+
 
 def main():
+    # Set up the argument parser
+    #parser = argparse.ArgumentParserl(description="Add motion to a BOLD image.")
+    # Add argument: input file name
+    #parser.add_argument("-i", "--input", type=str, help="Path to input file")
+    # Add argument: output file name
+    #parser.add_argument("-o", "--output", type=str, help="Path to output file")
+
+
     # Specify variables
     inFn = "BOLD.nii.gz"
     outFn = "moving_brain.nii.gz"
+    logFn = "motion_variables.csv"
+
+    # Set up log file header
+    header = "Volume Number, X Angle, Y Angle, Z Angle\n"
+    updateFile(logFn, header)
 
     # Load image
     seq, coords = mil.loadBOLD(inFn)
@@ -162,7 +190,7 @@ def main():
     # Make list for storing volumes of new image
     newSeq = []
 
-    # Start simple: rotate 2.4 degrees left-right
+    # Assume no rotations in the initial image
     xAngle = 0.0
     yAngle = 0.0
     zAngle = 0.0
@@ -171,11 +199,6 @@ def main():
     offset = [seq.shape[2]/2.,
               seq.shape[0]/2.,
               seq.shape[1]/2.]  
-
-    # define scaling transformation from voxels to mm
-    vox2mm = generateScaleTransform(len(seq.shape)-1, 4.0)
-    mm2vox = generateScaleTransform(len(seq.shape)-1, 1/4.0)
-    
 
     # For every volume in the sequence
     for i in range(seq.shape[-1]):
@@ -186,6 +209,10 @@ def main():
         vol = mil.isolateVolume(seq, i)
         dimensions = vol.shape
         vol = sitk.GetImageFromArray(vol)
+
+        # Write the angles for the current transformation to the log file
+        line = str(i)+", "+str(xAngle)+", "+str(yAngle)+", "+str(zAngle)
+        updateFile(logFn, line)
 
         # Perform rotations
         # ...about the z axis
@@ -205,7 +232,8 @@ def main():
 
         # Check the new angles for the next image volume
         xAngle, yAngle, zAngle = sanityCheckRotation(xAngle, yAngle, zAngle)
-
+       
+        # Convert the Image to an array so we can work with it
         volNew = sitk.GetArrayFromImage(volRotated)
 
         # Add new image volume to sequence
