@@ -9,6 +9,9 @@ from nipy.core.api import Image
 from nipy import load_image, save_image
 from nipype.interfaces import dcmstack
 
+# For generating the mask
+import SimpleITK as sitk
+
 ##
 # Replicate the volume of interest 150 times
 #
@@ -28,6 +31,22 @@ def replicateVolume(vol):
     return newSeq
 
 
+##
+# Generate a 3D volumetric brain mask from the chosen image volume
+#
+# @param vol The image volume
+# 
+# @returns mask The image mask
+def generateMask(vol):
+    # Perform Otsu thresholding
+    otsu = sitk.OtsuThresholdImageFilter()
+    otsu.SetInsideValue(0)
+    otsu.SetOutsideValue(1)
+    mask = otsu.Execute(vol)
+
+    return mask
+
+
 def main():
     # Future: add arguments for inFn, outFn, and volNum
 
@@ -43,6 +62,13 @@ def main():
 
     # Replicate the volume
     uniformSeq = replicateVolume(volume)
+
+    # Get a mask of the volume
+    volumeImg = sitk.GetImageFromArray(volume)
+    mask = generateMask(volumeImg)
+    maskArray = sitk.GetArrayFromImage(mask)
+    maskStack = mil.convertArrayToImage(np.array([maskArray]), coordinates)
+    mil.saveBOLD(maskStack, "brain_mask.nii.gz")
 
     # Convert the list of replicated volumes into an Image object
     seqImg = mil.convertArrayToImage(uniformSeq, coordinates)

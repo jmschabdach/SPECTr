@@ -37,9 +37,9 @@ def generateBlur(img, x, y, z, diameter=50, intensity=1.0):
     blur = np.around(blur)
 
     # Set up int values for zero padding
-    lpad = int(np.floor(x - (diameter/2.0)))
+    lpad = int(np.floor(y - (diameter/2.0)))
     rpad = int(np.ceil(img.shape[2] - lpad - diameter))
-    upad = int(np.floor(y - (diameter/2.0)))
+    upad = int(np.floor(x - (diameter/2.0)))
     spad = int(np.floor(z - (diameter/2.0)))
 
     # Create a blank, image sized canvas
