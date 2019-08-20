@@ -45,6 +45,7 @@ def generateRotationTransform(dim, deg, ax, center):
 
     # Set the point at which the transform should be applied
     rotateTransform.SetCenter(center)
+    print(center)
  
     return rotateTransform
 
