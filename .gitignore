@@ -1,0 +1,5 @@
+*.png
+*.nii.gz
+*.nii
+test_image/
+__pycache__/

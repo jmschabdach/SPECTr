@@ -1,90 +1,57 @@
 import SimpleITK as sitk
 import numpy as np
 import math
+import os
 import argparse
 from boldli import ImageManipulatingLibrary as mil
 
 ##
-# Rotate the image a specific number of degrees about a specific axis
+# Generate an affine transformation with rotation and translation
 #
-# @param point Point in Cartesian coordinates to rotate
-# @param deg Float representation of degrees
-# @param ax The axis to rotate about. Currently set to X = 0, Y = 1, Z = 2
+# @param xdeg Degrees of rotation about the image's x axis
+# @param ydeg Degrees of rotation about the image's y axis
+# @param zdeg Degrees of rotation about the image's z axis
+# @param translation Tuple of 3 points specifying the translation to apply
+# @param center Tuple of 3 points specifying the center of the image
 # 
-# @returns rotateTransform An sitk.AffineTransform with a rotation about one axis
-def generateRotationTransform(dim, deg, ax, center):
+# @returns transform An sitk.AffineTransform with rotation and translation components
+def generateAffineTransform(xdeg, ydeg, zdeg, translation, center):
     # Convert the angle from degrees to radians
-    rad = math.radians(-deg)
+    xrad = math.radians(-xdeg)
+    yrad = math.radians(-ydeg)
+    zrad = math.radians(-zdeg)
     # Set up the new Affine Transform
-    rotateTransform = sitk.AffineTransform(dim)
+    transform = sitk.AffineTransform(3)
 
-    # Set the rotation matrix depending on the axis of rotation
-    if ax == 0:
-        # Rotation about the z axis
-        matrix = np.array([[1, 0, 0],
-                           [0, np.cos(rad), -np.sin(rad)],
-                           [0, np.sin(rad), np.cos(rad)]])
-    elif ax == 1:
-        # Rotation about the x axis
-        matrix = np.array([[np.cos(rad), 0, np.sin(rad)],
-                           [0, 1, 0],
-                           [-np.sin(rad), 0, np.cos(rad)]])
+    # Generate the rotation matrices 
+    # Rotation about the z axis
+    zmatrix = np.array([[1, 0, 0],
+                        [0, np.cos(zrad), -np.sin(zrad)],
+                        [0, np.sin(zrad), np.cos(zrad)]])
 
-    elif ax == 2:
-        # Rotation about the y axis
-        matrix = np.array([[np.cos(rad), -np.sin(rad), 0],
-                           [np.sin(rad), np.cos(rad), 0],
-                           [0, 0, 1]])
-  
-    else:
-        # raise an error, this shouldn't happen
-        print("Error: invalid axis of rotation")
-        exit(-1)
+    # Rotation about the x axis
+    xmatrix = np.array([[np.cos(xrad), 0, np.sin(xrad)],
+                       [0, 1, 0],
+                       [-np.sin(xrad), 0, np.cos(xrad)]])
 
-    rotateTransform.SetMatrix(matrix.ravel())
+    # Rotation about the y axis
+    ymatrix = np.array([[np.cos(yrad), -np.sin(yrad), 0],
+                       [np.sin(yrad), np.cos(yrad), 0],
+                       [0, 0, 1]])
+
+    # Multiply the matrices together 
+    matrix = zmatrix.dot(xmatrix.dot(ymatrix))
+
+    # Set the rotation aspect of the transform
+    transform.SetMatrix(matrix.ravel())
+
+    # Set the translation aspect of the transform
+    transform.SetTranslation(translation)
 
     # Set the point at which the transform should be applied
-    rotateTransform.SetCenter(center)
-    print(center)
+    transform.SetCenter(center)
  
-    return rotateTransform
-
-
-##
-# Generate a scaling transform
-#
-# @param dim Int number of dimensions
-# @param scale Float scaling factor
-#
-# @returns scaleTransform A sitk.AffineTransform object
-def generateScaleTransform(dim, scale):
-    # Set up the new Affine Transform
-    scaleTransform = sitk.AffineTransform(dim)
-    # Make the matrix containing the scaling factors
-    scalingMatrix = np.zeros((dim, dim))
-    for i in range(dim):
-        scalingMatrix[i, i] = scale
-
-    scaleTransform.SetMatrix(scalingMatrix.ravel())
-
-    return scaleTransform
-
-## 
-# Generate translation transform
-#
-# @param dim Int number of dimensions
-# @param shift List of shifts in the format [tx, ty, tz]
-#
-# @returns shiftTransform A sitk.AffineTransform object
-def generateShiftTransform(dim, shift, center):
-    # Set up the new Affine Transform
-    shiftTransform = sitk.AffineTransform(dim)
-    # Set the translation parameter
-    shiftTransform.SetTranslation((shift[0], shift[1], shift[2]))
-    # Set the point at which the transform should be applied
-    shiftTransform.SetCenter(center)
-    
-    return shiftTransform
+    return transform
 
 
 ##
@@ -152,6 +119,15 @@ def delta(mean=0.0, std=1.0):
     change = np.random.normal(mean, std)
     return change
 
+## 
+# Save an affine transformation to a file
+#
+# @param transform An sitk.AffineTransform object
+# @param fn Name of the file to save the transform to as a string
+def saveTransformInfo(transform, fn):
+    sitk.WriteTransform(transform, fn)
+
+
 ##
 # Write a line to a file
 #
@@ -169,20 +145,27 @@ def updateFile(fn, line):
 
 def main():
     # Set up the argument parser
-    #parser = argparse.ArgumentParserl(description="Add motion to a BOLD image.")
+    parser = argparse.ArgumentParser(description="Add motion to a BOLD image.")
     # Add argument: input file name
-    #parser.add_argument("-i", "--input", type=str, help="Path to input file")
+    parser.add_argument("-i", "--input", type=str, help="Path to input file")
     # Add argument: output file name
     #parser.add_argument("-o", "--output", type=str, help="Path to output file")
 
+    # Parse the arguments
+    args = parser.parse_args()
+    print(args)
 
     # Specify variables
-    inFn = "BOLD.nii.gz"
-    outFn = "moving_brain.nii.gz"
-    logFn = "motion_variables.csv"
+    inFn = args.input
+    baseDir = os.path.dirname(inFn)
+    transformDir = os.path.join(baseDir, "generated_transforms")
+    if not os.path.exists(transformDir):
+        os.mkdir(transformDir)
+    outFn = os.path.join(baseDir, "moving_brain.nii.gz")
+    logFn = os.path.join(baseDir, "motion_variables.csv")
 
     # Set up log file header
-    header = "Volume Number, X Angle, Y Angle, Z Angle\n"
+    header = "Volume Number, X Angle, Y Angle, Z Angle, X Translation, Y Translation, Z Translation\n"
     updateFile(logFn, header)
 
     # Load image
@@ -191,10 +174,13 @@ def main():
     # Make list for storing volumes of new image
     newSeq = []
 
-    # Assume no rotations in the initial image
+    # Assume no motion in the initial image
     xAngle = 0.0
     yAngle = 0.0
     zAngle = 0.0
+    xShift = 0.0
+    yShift = 0.0
+    zShift = 0.0
 
     # Calculate offset for center of brain - this is the correct allocation of dimensions
     offset = [seq.shape[2]/2.,
@@ -212,33 +198,40 @@ def main():
         vol = sitk.GetImageFromArray(vol)
 
         # Write the angles for the current transformation to the log file
-        line = str(i)+", "+str(xAngle)+", "+str(yAngle)+", "+str(zAngle)
+        line = str(i)+", "+str(xAngle)+", "+str(yAngle)+", "+str(zAngle)+", "+str(xShift)+", "+str(yShift)+", "+str(zShift)
         updateFile(logFn, line)
 
-        # Perform rotations
-        # ...about the z axis
-        zrotate = generateRotationTransform(len(dimensions), zAngle, 0, offset)
-        volRotated = performTransform(vol, zrotate)
+        # Generate transformation
+        transform = generateAffineTransform(xAngle, yAngle, zAngle, (xShift, yShift, zShift), offset)
+       
+        # Apply transformation to image
+        volTransformed = performTransform(vol, transform)
+
+        # Save the transformation
+        fn = os.path.join(transformDir, str(i).zfill(3)+"_generated_Affine.mat")
+        saveTransformInfo(transform, fn)
+
+        # Convert the Image to an array so we can work with it
+        volNew = sitk.GetArrayFromImage(volTransformed)
+
+        # Add new image volume to sequence
+        newSeq.append(volNew)
+
+        # Update angles
         zAngle = zAngle + delta()
-
-        # ...about the y axis
-        yrotate = generateRotationTransform(len(dimensions), yAngle, 0, offset)
-        volRotated = performTransform(volRotated, yrotate)
         yAngle = yAngle + delta()
-
-        # ...about the x axis
-        xrotate = generateRotationTransform(len(dimensions), xAngle, 0, offset)
-        volRotated = performTransform(volRotated, xrotate)
         xAngle = xAngle + delta()
 
         # Check the new angles for the next image volume
         xAngle, yAngle, zAngle = sanityCheckRotation(xAngle, yAngle, zAngle)
-       
-        # Convert the Image to an array so we can work with it
-        volNew = sitk.GetArrayFromImage(volRotated)
+ 
+        # Update translations
+#        zShift = zShift + delta()
+#        yShift = yShift + delta()
+#        xShift = xShift + delta()
 
-        # Add new image volume to sequence
-        newSeq.append(volNew)
+        # Check the new translations for the next image volume
+        # UNDER DEVELOPMENT
 
     # Convert the list of transformed image volumes into a BOLD sequence
     newBOLD = mil.convertArrayToImage(newSeq, coords)
