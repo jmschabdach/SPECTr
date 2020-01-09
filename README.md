@@ -30,11 +30,16 @@ Step 4: Use the `BaselineImageGenerator.py` script to replicate the `masked_base
 
 The specific command is `python BaseImageGenerator.py -i /dir/masked_base_volume.nii.gz -o /dir/base_image_sequence.nii.gz`, and it creates the file `/dir/base_image_sequence.nii.gz` which is 150 copies of the volume in `/dir/masked_base_volume.nii.gz`
 
-Step 5: Use the DMN ROIs to generate pseudo BOLD signal for the whole sequence
+Step 5: Add Guassin noise to every image volume in k-space to imitate scanner noise.
 
-The specific command is `python generate_BOLD_signal.py -i /dir/base_image_sequence.nii.gz -r /dir/masked_dmn_roi.nii.gz -o /dir/image_sequence_bold.nii.gz`
+`python generate_background_noise.py -i /dir/base_image_sequence.nii.gz -o /dir/image_sequence_noisy.nii.gz` 
 
-Step 6: Add speckle to every image volume to imitate scanner noise.
+Creates the image `/dir/image_sequence_noisy.nii.gz` in the directory of images. This sequence contains noise generated from a complex Gaussian distribution.
+
+Step 6: Use the DMN ROIs to generate pseudo BOLD signal for the whole sequence. 
+
+The specific command is `python generate_BOLD_signal.py -i /dir/image_sequence_noisy.nii.gz -r /dir/masked_dmn_roi.nii.gz -o /dir/image_sequence_bold.nii.gz`
 
 Step 7: Add motion to the brain. The motion rotates the head around the center of the brain. The rotations are saved in a .csv file.
 
+`python add_motion.py -i /dir/image_sequence_bold.nii.gz -o pseudo_BOLD.nii.gz`
