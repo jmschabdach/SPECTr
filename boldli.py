@@ -15,8 +15,9 @@ class ImageManipulatingLibrary:
     # @returns img The image sequence as an Image object
     # @returns coords The coordinate system for the image sequence
     def loadBOLD(fn):
-        img = load_image(fn)
-        coords = img.coordmap
+        imgObj = load_image(fn)
+        coords = imgObj.coordmap
+        img = imgObj.get_data()
 
         return img, coords
 
