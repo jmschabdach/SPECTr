@@ -1,6 +1,8 @@
 import numpy as np
 from nipy.core.api import Image
 from nipy import load_image, save_image
+import argparse
+from boldli import ImageManipulatingLibrary as mil
 
 ##
 # Perform the fast Fourier transform on an image and return the magnitude and phase images
@@ -14,7 +16,6 @@ def volumeFFT(img):
     
     # Use FFT shift to center the spectrum
     kImgShifted = np.fft.fftshift(kImg)
-    print(np.max(kImgShifted), np.min(kImgShifted))
     
     return kImgShifted
 
@@ -27,7 +28,7 @@ def volumeFFT(img):
 # @param intensity Float value to scale the intensity of the distribution
 #
 # @returns newImg The distribution located at (x, y, z) in a blank image
-def generateComplexGaussianNoise(imgshape, intensity=1.0):
+def generateComplexGaussianNoise(imgshape, magIntensity=2.0, phaseIntensity=0.05):
     
     # Center of the image
     x = imgshape[0]
@@ -35,11 +36,10 @@ def generateComplexGaussianNoise(imgshape, intensity=1.0):
     z = imgshape[2]
     
     # Generate Gaussian noise
-    noise = np.squeeze(np.random.standard_normal(size=(x, y, z, 2)).view(np.complex128))
+    noise = [[[[magIntensity*np.random.standard_normal(), phaseIntensity*np.random.standard_normal()] for i in range(z)] for j in range(y)] for k in range(x)]
+    noise = np.asarray(noise)
     print(noise.shape)
-    
-    # Amplify the noise as needed
-    noise *= intensity
+    noise = np.squeeze(noise.view(np.complex128))
     
     return noise
 
@@ -81,33 +81,74 @@ def volumeIFFTAndClean(kImg):
 
 def main():
     # NEXT
-    # [ ] Check this script to make sure it runs correctly
-    # [ ] Add argparse
-    # [ ] Generalize this script to generate noise for single volumes or large seqeuences
-    # Images to check
-    maskedVolFn = "masked_base_volume.nii.gz"
+    # [X] Check this script to make sure it runs correctly
+    # [X] Add argparse
+    # [X] Generalize this script to generate noise for single volumes or large seqeuences
 
-    img = load_image(maskedVolFn)
+    # Add arguments to argparse
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-i', '--input', type=str, help='Image to add noise to')
+    parser.add_argument('-o', '--output', type=str, help='Location to save noisy image')
 
-    imgData = img.get_data()
-    print(np.max(imgData), np.min(imgData))
-    imgData *= (1000.0/np.amax(imgData))
-    print(np.max(imgData), np.min(imgData))
+    args = parser.parse_args()
 
-    # Perform the FFT
-    kspace = volumeFFT(imgData)
+    # maskedVolFn = "masked_base_volume.nii.gz"
+    # outFn = "noisy_volume.nii.gz"
 
-    # Generate complex Gaussian noise
-    noise = generateComplexGaussianNoise(kspace.shape)
-    print(np.max(noise), np.min(noise))
+    img = load_image(args.input)
 
-    # Add complex Gaussian noise to the k-space image
-    noisyKspace = addImages(kspace, noise)
+    # Check image shape
+    if len(img.get_data().shape) == 3:
+        # Normalize signal range
+        imgData = img.get_data()
+        imgData *= (1000.0/np.max(imgData))
 
-    # Convert back to physical space
-    noisyImg = volumeIFFT(noisyKspace)
+        # Perform the FFT
+        kspace = volumeFFT(imgData)
 
-    print(np.max(noisyImg), np.min(noisyImg))
+        # Generate complex Gaussian noise
+        noise = generateComplexGaussianNoise(kspace.shape)
+
+        # Add complex Gaussian noise to the k-space image
+        noisyKspace = addImages(kspace, noise)
+
+        # Convert back to physical space
+        noisyImg = volumeIFFTAndClean(noisyKspace)
+
+        # Save noisy image
+        _ = save_image(Image(noisyImg, img.coordmap), args.output)
+
+    elif len(img.get_data().shape) == 4:
+        print(img.get_data().shape)
+
+        noisyVols = []
+        signalNormFactor = np.max(img.get_data())
+
+        # Iterate through the volumes in the sequence
+        for i in range(img.get_data().shape[-1]):
+            # Isolate the volume
+            vol = mil.isolateVolume(img, i)
+            vol *= (1000.0/signalNormFactor)
+
+            # Perform the FFT
+            kspace = volumeFFT(vol)
+
+            # Generate complex Gaussian noise
+            noise = generateComplexGaussianNoise(kspace.shape)
+
+            # Add complex Gaussian noise to the k-space image
+            noisyKspace = addImages(kspace, noise)
+
+            # Convert back to physical space
+            noisyVols.append(volumeIFFTAndClean(noisyKspace))
+
+            print("Added noise to volume", i)
+
+        # Save noisy image
+        _ = save_image(Image(np.asarray(noisyVols), img.coordmap), args.output)
+
+    
+
 
 
 if __name__ == "__main__":
