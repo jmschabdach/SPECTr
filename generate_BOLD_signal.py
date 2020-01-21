@@ -2,6 +2,8 @@ from boldli import ImageManipulatingLibrary as mil
 import numpy as np
 import argparse
 from nipy.core.api import Image
+import math
+import random
 
 def main():
     parser = argparse.ArgumentParser()
@@ -18,26 +20,30 @@ def main():
     # Load ROI
     roi, roi_coords = mil.loadBOLD(args.roi)
     # BOLD signal: f(t) = s*cos(f0*t-delta)+e
-    # s: constant, 20% max value
-    s = 0.1*np.amax(seq)
+    # s: constant, 2.4% max value
+    s = 0.024*np.amax(seq)
     # f0: fundamental frequency, 0.04 Hz
     f0 = 0.04
     # t_shift: temporal shift
-    t_shift = 0
+    t_shift = random.random()
     # a_shift: amplitude shift, will be random
-    a_shift = 0
+    a_shift = random.random()
+
+    # Create a new image of shape seq for saving the generated signal
+    signalData = np.zeros(seq.shape)
 
     dim1, dim2, dim3 = np.nonzero(roi)
 
     for i, j, k in zip(dim1, dim2, dim3):
         for t in range(seq.shape[-1]):
-            signal = s * np.cos(f0*(t-t_shift)) + a_shift
-#            print(signal)
-#            print(seq[i][j][k][t])
+            signal = s * (np.cos(f0*math.pi*2*(t-t_shift)) + a_shift)
             seq[i][j][k][t] += signal
 
     newImg = Image(seq, seq_coords)
     mil.saveBOLD(newImg, args.out_fn)
+
+    newImg = Image(signalData, seq_coords)
+    mil.saveBOLD(newImg, "generated_BOLD_signal.nii.gz")
 
 
 if __name__ == '__main__':
