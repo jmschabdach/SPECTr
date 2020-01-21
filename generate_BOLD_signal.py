@@ -4,6 +4,7 @@ import argparse
 from nipy.core.api import Image
 import math
 import random
+import os
 
 def main():
     parser = argparse.ArgumentParser()
@@ -19,15 +20,17 @@ def main():
     seq, seq_coords = mil.loadBOLD(args.sequence)
     # Load ROI
     roi, roi_coords = mil.loadBOLD(args.roi)
+
+    # Create a new image of shape seq for saving the generated signal
+    signalData = np.zeros(seq.shape)
+
+    print(seq.shape)
+    print(roi.shape)
     # BOLD signal: f(t) = s*cos(f0*t-delta)+e
     # s: constant, 2.4% max value
     s = 0.024*np.amax(seq)
     # f0: fundamental frequency, 0.04 Hz
     f0 = 0.04
-    # t_shift: temporal shift
-    t_shift = random.random()
-    # a_shift: amplitude shift, will be random
-    a_shift = random.random()
 
     # Create a new image of shape seq for saving the generated signal
     signalData = np.zeros(seq.shape)
@@ -35,15 +38,22 @@ def main():
     dim1, dim2, dim3 = np.nonzero(roi)
 
     for i, j, k in zip(dim1, dim2, dim3):
+        # t_shift: temporal shift
+        t_shift = np.random.uniform(low=0.0, high=(1.0/f0-f0))
+        # a_shift: amplitude shift, will be random
+        a_shift = np.random.uniform(low=0.0, high=s)
+
         for t in range(seq.shape[-1]):
             signal = s * (np.cos(f0*math.pi*2*(t-t_shift)) + a_shift)
             seq[i][j][k][t] += signal
+            signalData[i][j][k][t] = signal
 
     newImg = Image(seq, seq_coords)
     mil.saveBOLD(newImg, args.out_fn)
 
     newImg = Image(signalData, seq_coords)
-    mil.saveBOLD(newImg, "generated_BOLD_signal.nii.gz")
+    path = os.path.dirname(args.out_fn)
+    mil.saveBOLD(newImg, os.path.join(path, "generated_BOLD_signal.nii.gz"))
 
 
 if __name__ == '__main__':

@@ -149,7 +149,9 @@ def main():
     # Add argument: input file name
     parser.add_argument("-i", "--input", type=str, help="Path to input file")
     # Add argument: output file name
-    #parser.add_argument("-o", "--output", type=str, help="Path to output file")
+    parser.add_argument("-o", "--output", type=str, help="Path to output file")
+    # Add argument: center of mass file
+    parser.add_argument("-c", "--com", type=str, help="Path to center of mass file")
 
     # Parse the arguments
     args = parser.parse_args()
@@ -161,13 +163,15 @@ def main():
     transformDir = os.path.join(baseDir, "generated_transforms")
     if not os.path.exists(transformDir):
         os.mkdir(transformDir)
-    outFn = os.path.join(baseDir, "moving_brain.nii.gz")
+    #outFn = os.path.join(baseDir, "moving_brain.nii.gz")
+    outFn = args.output
     logFn = os.path.join(baseDir, "motion_variables.csv")
 
     # Set up log file header
     header = "Volume Number, X Angle, Y Angle, Z Angle, X Translation, Y Translation, Z Translation\n"
     updateFile(logFn, header)
-
+    
+    print("Loading the image")
     # Load image
     seq, coords = mil.loadBOLD(inFn)
 
@@ -181,11 +185,20 @@ def main():
     xShift = 0.0
     yShift = 0.0
     zShift = 0.0
-
+ 
+    print("Calculating offset")
     # Calculate offset for center of brain - this is the correct allocation of dimensions
-    offset = [seq.shape[2]/2.,
-              seq.shape[0]/2.,
-              seq.shape[1]/2.]  
+    if args.com is None:
+        offset = [seq.shape[2]/2.,
+                  seq.shape[0]/2.,
+                  seq.shape[1]/2.]  
+    else:
+        with open(args.com, "r") as f:
+            line = f.readline()
+        com = line[1:-1]
+        print(com)
+        offset = [int(i) for i in com.split(", ")]
+        print(offset)
 
     # For every volume in the sequence
     for i in range(seq.shape[-1]):

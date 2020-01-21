@@ -111,7 +111,6 @@ def main():
     sequence, coordinates = mil.loadBOLD(inFn)
 
     print(sequence.shape)
-    print(coordinates)
 
     # if the image only has 3 dimensions
     if len(sequence.shape) == 3:
@@ -136,6 +135,7 @@ def main():
     # Convert the list of replicated volumes into an Image object
     print("Converting the list of replicated volumes to an image")
     seqImg = mil.convertArrayToImage(uniformSeq, coordinates)
+    print("baseline sequence", seqImg.get_data().shape)
 
     # Save the volume
     print("Saving the image")

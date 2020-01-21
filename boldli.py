@@ -30,7 +30,7 @@ class ImageManipulatingLibrary:
     # @returns vol The isolated volume
     def isolateVolume(seq, volNum=0):
         # Pull out the volume of interest from the sequence
-        vol = seq[:,:,:, volNum].get_data()[:,:,:, None]
+        vol = seq[:,:,:, volNum]#.get_data()[:,:,:, None]
         # Make sure that the volume only has 3 dimensions
         if len(vol.shape) == 4:
             vol = np.squeeze(vol)
