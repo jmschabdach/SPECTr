@@ -29,9 +29,9 @@ def main():
     roi2, coords2 = mil.loadBOLD(args.roi2)
     img, imgCoords = mil.loadBOLD(args.coord_image)
 
-    print(coords1)
-    print(coords2)
-    print(imgCoords)
+    print("roi1", roi1.shape)
+    print("roi2", roi2.shape)
+    print("coords", img.shape)
 
     # perform the OR-ing of the 2 rois
     addingImgs = BinaryMaths()
@@ -44,8 +44,7 @@ def main():
     # resample the new roi to be in the coordinate frame of the coordinate image
     jointRoi = load_image(args.output_file)
     coordsImg = load_image(args.coord_image)
-    print(jointRoi.get_data().shape)
-    print(coordsImg.get_data().shape)
+    print("joint rois", jointRoi.get_data().shape)
     newRoiImg = resample_img2img(jointRoi, coordsImg, order=0)
     save_image(newRoiImg, args.output_file)
 

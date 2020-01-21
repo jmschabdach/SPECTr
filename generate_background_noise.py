@@ -116,7 +116,7 @@ def main():
         noisyImg = volumeIFFTAndClean(noisyKspace)
 
         # Save noisy image
-        _ = save_image(Image(noisyImg, img.coordmap), args.output)
+        save_image(Image(noisyImg, img.coordmap), args.output)
 
     elif len(img.get_data().shape) == 4:
         print(img.get_data().shape)
@@ -144,11 +144,10 @@ def main():
 
             print("Added noise to volume", i)
 
+        noisySeq = mil.convertArrayToImage(noisyVols, img.coordmap)
+        print(noisySeq.get_data().shape)
         # Save noisy image
-        _ = save_image(Image(np.asarray(noisyVols), img.coordmap), args.output)
-
-    
-
+        mil.saveBOLD(noisySeq, args.output)
 
 
 if __name__ == "__main__":

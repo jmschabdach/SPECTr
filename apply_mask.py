@@ -20,8 +20,8 @@ def main():
     sequence, coords1 = mil.loadBOLD(sequenceFn)
     # Load the mask
     mask, coords2 = mil.loadBOLD(maskFn)
-    print(coords1)
-    print(coords2)
+    print("sequence", sequence.shape)
+    print("mask", mask.shape)
 
     masking = ApplyMask()
     masking.inputs.in_file = sequenceFn
