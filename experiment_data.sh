@@ -44,13 +44,13 @@ for i in {001..030} ; do
     # These are the steps that need to be repeated
 
     # Step 6: Use the DMN ROIs to generate pseudo BOLD signal for the whole sequence. 
-    python generate_BOLD_signal.py -i sandbox/base_image_sequence.nii.gz -r sandbox/masked_dmn_roi.nii.gz -o $dir/image_sequence_bold.nii.gz
+    python generate_BOLD_signal.py -s sandbox/base_image_sequence.nii.gz -r sandbox/masked_dmn_roi.nii.gz -o $dir/image_sequence_bold.nii.gz
 
     # Step 5: Add Guassin noise to every image volume in k-space to imitate scanner noise.
-    python generate_background_noise.py -i $dir/base_image_sequence.nii.gz -o $dir/image_sequence_noisy.nii.gz 
+    python generate_background_noise.py -i $dir/image_sequence_bold.nii.gz -o $dir/image_sequence_noisy.nii.gz 
    
     # Step 7: Add motion to the brain. The motion rotates the head around the center of the brain. The rotations are saved in a .csv file.
-    python add_motion.py -i $dir/image_sequence_bold.nii.gz -o $dir/pseudo_BOLD.nii.gz
+    python add_motion.py -i $dir/image_sequence_noisy.nii.gz -o $dir/pseudo_BOLD.nii.gz
 
 done
 
