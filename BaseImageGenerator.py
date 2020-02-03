@@ -10,11 +10,15 @@ from nipy.core.api import Image
 from nipy import load_image, save_image
 from nipype.interfaces import dcmstack
 
+# For resizing the 3D image
+from skimage.transform import resize
+
 # For manipulating the coordinates
 from nipy.core.api import CoordinateSystem, AffineTransform
 
 # For generating the mask
 import SimpleITK as sitk
+
 
 ##
 # Replicate the volume of interest 150 times
@@ -111,7 +115,8 @@ def main():
     sequence, coordinates = mil.loadBOLD(inFn)
 
     print(sequence.shape)
-
+    
+    print("Loaded the image sequence")
     # if the image only has 3 dimensions
     if len(sequence.shape) == 3:
         volume = sequence
