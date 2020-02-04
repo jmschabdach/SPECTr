@@ -89,11 +89,17 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str, help='Image to add noise to')
     parser.add_argument('-o', '--output', type=str, help='Location to save noisy image')
+    parser.add_argument('-s', '--scaling', type=str, help='Scaling factor for noise')
 
     args = parser.parse_args()
 
     # maskedVolFn = "masked_base_volume.nii.gz"
     # outFn = "noisy_volume.nii.gz"
+
+    if args.scaling is None:
+        scaling = 2.0
+    else:
+        scaling = args.scaling
 
     img = load_image(args.input)
 
@@ -107,7 +113,7 @@ def main():
         kspace = volumeFFT(imgData)
 
         # Generate complex Gaussian noise
-        noise = generateComplexGaussianNoise(kspace.shape)
+        noise = generateComplexGaussianNoise(kspace.shape, magIntensity=scaling)
 
         # Add complex Gaussian noise to the k-space image
         noisyKspace = addImages(kspace, noise)
@@ -134,7 +140,7 @@ def main():
             kspace = volumeFFT(vol)
 
             # Generate complex Gaussian noise
-            noise = generateComplexGaussianNoise(kspace.shape)
+            noise = generateComplexGaussianNoise(kspace.shape, magIntensity=scaling)
 
             # Add complex Gaussian noise to the k-space image
             noisyKspace = addImages(kspace, noise)

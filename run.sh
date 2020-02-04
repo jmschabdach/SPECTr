@@ -58,7 +58,7 @@ echo "Complete"
 
 echo "------------------------"
 echo "Adding scanner noise"
-python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz 
+python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz -s 3
 echo "Complete"
 
 # Step 7: Calculate the center of mass for the brain.
