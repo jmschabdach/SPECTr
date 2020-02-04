@@ -26,9 +26,13 @@ def main():
 
     print(seq.shape)
     print(roi.shape)
+    print(seq_coords)
+    print(roi_coords)
     # BOLD signal: f(t) = s*cos(f0*t-delta)+e
     # s: constant, 2.4% max value
-    s = 0.024*np.amax(seq)
+    print(np.mean(seq[seq > 0]))
+    print(0.3*np.mean(seq))
+    s = 0.3*np.mean(seq)
     # f0: fundamental frequency, 0.04 Hz
     f0 = 0.04
 
@@ -41,7 +45,8 @@ def main():
         # t_shift: temporal shift
         t_shift = np.random.uniform(low=0.0, high=(1.0/f0-f0))
         # a_shift: amplitude shift, will be random
-        a_shift = np.random.uniform(low=0.0, high=s)
+        #a_shift = np.random.uniform(low=0.0, high=s/10)
+        a_shift = 0
 
         for t in range(seq.shape[-1]):
             signal = s * (np.cos(f0*math.pi*2*(t-t_shift)) + a_shift)

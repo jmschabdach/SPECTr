@@ -125,6 +125,9 @@ def main():
         # Isolate the volume of interest
         volume = mil.isolateVolume(sequence, volNum)
 
+    # Normalize the image volume
+    volume *= (1000.0/volume.max())
+
     # Replicate the volume
     print("Replicating the volume")
     uniformSeq = replicateVolume(volume)

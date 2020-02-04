@@ -26,29 +26,52 @@ python downsample_images.py -i sandbox/dDMN_orig.nii.gz -o sandbox/dDMN.nii.gz
 python downsample_images.py -i sandbox/vDMN_orig.nii.gz -o sandbox/vDMN.nii.gz
 
 # Step 2: Combine the dorsal and ventral default mode network ROIs into the same file. You will also need to specify a file with the desired coordinate system, as the ROI files are saved in a different coordinate system than the structural images we are using and need to be resampled accordingly.
-
-#python combine_rois.py -1 sandbox/dDMN.nii.gz -2 sandbox/vDMN.nii.gz -c sandbox/PD.nii -o sandbox/dmn_roi.nii.gz
+ 
+echo "------------------------"
+echo "Combining ROIS"
+python combine_rois.py -1 sandbox/dDMN.nii.gz -2 sandbox/vDMN.nii.gz -c sandbox/PD.nii -o sandbox/dmn_roi.nii.gz
+echo "Complete"
 
 # Step 3: Use the `apply_mask.py` script to apply the mask from the Average Brain data to the T1-weighted Average Brain to isolate the brain. Repeat for the ROI image.
 
-#python apply_mask.py -s sandbox/PD.nii -m sandbox/mask.nii -o sandbox/masked_base_volume.nii.gz
-
+echo "------------------------"
+echo "Applying mask to input images"
+python apply_mask.py -s sandbox/PD.nii -m sandbox/mask.nii -o sandbox/masked_base_volume.nii.gz
+python apply_mask.py -s sandbox/dmn_roi.nii.gz -m sandbox/mask.nii -o sandbox/masked_dmn_roi.nii.gz
+echo "Complete"
+ 
 # Step 4: Use the `BaselineImageGenerator.py` script to replicate the `masked_base_volume.nii.gz` 149 times to create a sequence 150 volumes long.
-
-#python BaseImageGenerator.py -i sandbox/masked_base_volume.nii.gz -o sandbox/base_image_sequence.nii.gz
-
+ 
+echo "------------------------"
+echo "Generating the baseline image sequence"
+python BaseImageGenerator.py -i sandbox/masked_base_volume.nii.gz -o sandbox/base_image_sequence.nii.gz
+echo "Complete"
+ 
 # Step 5: Use the DMN ROIs to generate pseudo BOLD signal for the whole sequence. 
 
-#python generate_BOLD_signal.py -s sandbox/base_image_sequence.nii.gz -r sandbox/masked_dmn_roi.nii.gz -o sandbox/image_sequence_bold.nii.gz
+echo "------------------------"
+echo "Generating the BOLD signal"
+python generate_BOLD_signal.py -s sandbox/base_image_sequence.nii.gz -r sandbox/masked_dmn_roi.nii.gz -o sandbox/image_sequence_bold.nii.gz
+echo "Complete"
 
 # Step 6: Add Guassian noise to every image volume in k-space to imitate scanner noise.
 
-#python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz 
+echo "------------------------"
+echo "Adding scanner noise"
+python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz 
+echo "Complete"
 
 # Step 7: Calculate the center of mass for the brain.
 
-#python calculate_center_of_mass.py -i sandbox/masked_base_volume.nii.gz
+echo "------------------------"
+echo "Calculating the center of mass"
+python calculate_center_of_mass.py -i sandbox/masked_base_volume.nii.gz
+echo "Complete"
 
 # Step 8: Add motion to the brain. The motion rotates the head around the center of the brain. The rotations are saved in a .csv file.
 
-#python add_motion.py -i sandbox/image_sequence_noisy.nii.gz -c sandbox/center_of_mass.txt -o sandbox/pseudo_BOLD.nii.gz
+echo "------------------------"
+echo "Adding motion to the brain"
+python add_motion.py -i sandbox/image_sequence_noisy.nii.gz -c sandbox/center_of_mass.txt -o sandbox/pseudo_BOLD.nii.gz
+echo "Complete"
+

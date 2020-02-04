@@ -1,11 +1,15 @@
 import argparse
 from nipy import load_image, save_image
 import numpy as np
+import argparse
 
 def main():
     # set up argparse
+#     parser = argparse.ArgumentParser()
+#     parser.add_arg("-i", "--input", type=str)
+#     parser.add_arg("-r", "--roi-fn", type=str)
     # parse the args
-    melodicFn = "./sandbox/testing/melodic_IC.nii.gz"
+    melodicFn = "./testing_melodic/melodic_IC.nii.gz"
     roiFn = "./sandbox/dmn_roi.nii.gz"
 
     # load the images
