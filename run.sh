@@ -58,20 +58,13 @@ echo "Complete"
 
 echo "------------------------"
 echo "Adding scanner noise"
-python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz -s 3
+python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz -s 1
 echo "Complete"
 
-# Step 7: Calculate the center of mass for the brain.
-
-echo "------------------------"
-echo "Calculating the center of mass"
-python calculate_center_of_mass.py -i sandbox/masked_base_volume.nii.gz
-echo "Complete"
-
-# Step 8: Add motion to the brain. The motion rotates the head around the center of the brain. The rotations are saved in a .csv file.
+# Step 7: Add motion to the brain. The motion rotates the head around the center of the brain. The rotations are saved in a .csv file.
 
 echo "------------------------"
 echo "Adding motion to the brain"
-python add_motion.py -i sandbox/image_sequence_noisy.nii.gz -c sandbox/center_of_mass.txt -o sandbox/pseudo_BOLD.nii.gz
+python add_motion.py -i sandbox/image_sequence_noisy.nii.gz -o sandbox/pseudo_BOLD.nii.gz
 echo "Complete"
 

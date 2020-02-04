@@ -89,7 +89,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-i', '--input', type=str, help='Image to add noise to')
     parser.add_argument('-o', '--output', type=str, help='Location to save noisy image')
-    parser.add_argument('-s', '--scaling', type=str, help='Scaling factor for noise')
+    parser.add_argument('-s', '--scaling', type=float, help='Scaling factor for noise')
 
     args = parser.parse_args()
 

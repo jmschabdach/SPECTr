@@ -5,6 +5,26 @@ import os
 import argparse
 from boldli import ImageManipulatingLibrary as mil
 
+from skimage.measure import regionprops
+
+##
+# Calculate the center of mass for the image
+#
+# @param vol The image volume
+#
+# @returns com Center of mass as a list
+def calculateCOM(vol):
+    # Threshold the data
+    labeled = (vol > 0).astype(int)
+    # Calculate the properties of the data
+    properties = regionprops(labeled, vol)
+    # Get the centroid
+    centroid = properties[0].centroid
+    # Round to get the center of mass invoxels
+    com = [int(round(i)) for i in centroid]
+
+    return com
+
 ##
 # Generate an affine transformation with rotation and translation
 #
@@ -150,8 +170,6 @@ def main():
     parser.add_argument("-i", "--input", type=str, help="Path to input file")
     # Add argument: output file name
     parser.add_argument("-o", "--output", type=str, help="Path to output file")
-    # Add argument: center of mass file
-    parser.add_argument("-c", "--com", type=str, help="Path to center of mass file")
 
     # Parse the arguments
     args = parser.parse_args()
@@ -185,20 +203,6 @@ def main():
     xShift = 0.0
     yShift = 0.0
     zShift = 0.0
- 
-    print("Calculating offset")
-    # Calculate offset for center of brain - this is the correct allocation of dimensions
-    if args.com is None:
-        offset = [seq.shape[2]/2.,
-                  seq.shape[0]/2.,
-                  seq.shape[1]/2.]  
-    else:
-        with open(args.com, "r") as f:
-            line = f.readline()
-        com = line[1:-1]
-        print(com)
-        offset = [int(i) for i in com.split(", ")]
-        print(offset)
 
     # For every volume in the sequence
     for i in range(seq.shape[-1]):
@@ -207,6 +211,10 @@ def main():
 
         # Isolate image volume
         vol = mil.isolateVolume(seq, i)
+
+        # Calculate the center of mass
+        offset = calculateCOM(vol)
+
         dimensions = vol.shape
         vol = sitk.GetImageFromArray(vol)
 
@@ -214,7 +222,7 @@ def main():
         line = str(i)+", "+str(xAngle)+", "+str(yAngle)+", "+str(zAngle)+", "+str(xShift)+", "+str(yShift)+", "+str(zShift)
         updateFile(logFn, line)
 
-        # Generate transformation
+            # Generate transformation
         transform = generateAffineTransform(xAngle, yAngle, zAngle, (xShift, yShift, zShift), offset)
        
         # Apply transformation to image

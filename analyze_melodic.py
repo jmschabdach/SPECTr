@@ -5,12 +5,16 @@ import argparse
 
 def main():
     # set up argparse
-#     parser = argparse.ArgumentParser()
-#     parser.add_arg("-i", "--input", type=str)
-#     parser.add_arg("-r", "--roi-fn", type=str)
+    parser = argparse.ArgumentParser()
+    parser.add_argument("-i", "--input", type=str)
+    parser.add_argument("-r", "--roi-fn", type=str)
     # parse the args
-    melodicFn = "./testing_melodic/melodic_IC.nii.gz"
-    roiFn = "./sandbox/dmn_roi.nii.gz"
+
+    args = parser.parse_args()
+    melodicFn = args.input
+    roiFn = args.roi_fn
+#    melodicFn = "./testing_melodic/melodic_IC.nii.gz"
+#    roiFn = "./sandbox/dmn_roi.nii.gz"
 
     # load the images
     melodic = load_image(melodicFn)
@@ -19,6 +23,10 @@ def main():
     roi = load_image(roiFn)
     roiData = roi.get_data()
     roiCoords = roi.coordmap
+
+    print(roiData.shape)
+    if len(roiData.shape) == 4:
+        roiData = np.average(roiData, axis=-1)
 
     maxCorr = 0.0
     maxCorrVol = 0
@@ -34,7 +42,7 @@ def main():
             # max correlation = calculated correlation
             maxCorr = corr
             # max corr volume = current volume number
-            maxCorrVol = i
+            maxCorrVol = i+1
 
     # print results summary
     print("MELODIC extracted", melodicData.shape[-1], "components.")
