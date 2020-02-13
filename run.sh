@@ -58,7 +58,7 @@ echo "Complete"
 
 echo "------------------------"
 echo "Adding scanner noise"
-python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz -s 1
+python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz -s 0.1
 echo "Complete"
 
 # Step 7: Add motion to the brain. The motion rotates the head around the center of the brain. The rotations are saved in a .csv file.

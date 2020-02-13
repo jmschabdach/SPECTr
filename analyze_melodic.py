@@ -31,12 +31,19 @@ def main():
     maxCorr = 0.0
     maxCorrVol = 0
     correlations = []
+    vols = []
+
+    # Threshold the rois
+    melodicData = np.abs(melodicData)
+    melodicData[melodicData > 0.0 ] = 1
+    melodicData[melodicData <= 0.0 ] = 0
     
     # for each volume in melodicData
     for i in range(melodicData.shape[-1]):
         # calculate the correlation with the roiData
         corr = np.correlate(melodicData[:, :, :, i].flatten(), roiData.flatten())
-        correlations.append(corr)
+        correlations.append(corr[0])
+        vols.append(i)
         # if the calculated correlation > max correlation
         if corr > maxCorr:
             # max correlation = calculated correlation
@@ -44,10 +51,17 @@ def main():
             # max corr volume = current volume number
             maxCorrVol = i+1
 
+    # sort the correlations and volume numbers
+    sortCorrVols = sorted(zip(correlations, vols))
+
     # print results summary
     print("MELODIC extracted", melodicData.shape[-1], "components.")
     print("      Max correlation to DMN ROI:", maxCorr)
     print("  Component with max correlation:", maxCorrVol)
+    print(".")
+    print("Best correlations and their components:")
+    for i in range(len(sortCorrVols)):
+        print(sortCorrVols[i])
 
 if __name__ == "__main__":
     main()

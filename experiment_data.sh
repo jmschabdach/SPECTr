@@ -51,8 +51,8 @@ if [ ! -d $1/experimental_data ] ; then
     mkdir $1/experimental_data
 fi
 
-for i in {01..30} ; do
-    dir=$1/experimental_data/%i
+for i in {61..90} ; do
+    dir=$1/experimental_data/$i
     if [ ! -d $dir ] ; then
         mkdir $dir
     fi
@@ -64,20 +64,21 @@ for i in {01..30} ; do
     
     echo "------------------------"
     echo "Generating the BOLD signal"
-    python generate_BOLD_signal.py -s sandbox/base_image_sequence.nii.gz -r sandbox/masked_dmn_roi.nii.gz -o sandbox/image_sequence_bold.nii.gz
+    python generate_BOLD_signal.py -s sandbox/base_image_sequence.nii.gz -r sandbox/masked_dmn_roi.nii.gz -o $dir/image_sequence_bold.nii.gz
     echo "Complete"
     
     # Step 6: Add Guassian noise to every image volume in k-space to imitate scanner noise.
     
     echo "------------------------"
     echo "Adding scanner noise"
-    python generate_background_noise.py -i sandbox/image_sequence_bold.nii.gz -o sandbox/image_sequence_noisy.nii.gz -s 1
+    python generate_background_noise.py -i $dir/image_sequence_bold.nii.gz -o $dir/image_sequence_noisy.nii.gz -s 0.5
     echo "Complete"
     
     # Step 7: Add motion to the brain. The motion rotates the head around the center of the brain. The rotations are saved in a .csv file.
     
     echo "------------------------"
     echo "Adding motion to the brain"
-    python add_motion.py -i sandbox/image_sequence_noisy.nii.gz -o sandbox/pseudo_BOLD.nii.gz
+    python add_motion.py -i $dir/image_sequence_noisy.nii.gz -o $dir/BOLD.nii.gz
     echo "Complete"
 
+done
