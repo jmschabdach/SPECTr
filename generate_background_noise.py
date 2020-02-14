@@ -28,7 +28,7 @@ def volumeFFT(img):
 # @param intensity Float value to scale the intensity of the distribution
 #
 # @returns newImg The distribution located at (x, y, z) in a blank image
-def generateComplexGaussianNoise(imgshape, magIntensity=2.0, phaseIntensity=0.05):
+def generateComplexGaussianNoise(imgshape, magIntensity=2.0, phaseIntensity=0.1):
     
     # Center of the image
     x = imgshape[0]
@@ -38,8 +38,10 @@ def generateComplexGaussianNoise(imgshape, magIntensity=2.0, phaseIntensity=0.05
     # Generate Gaussian noise
     noise = [[[[magIntensity*np.random.standard_normal(), phaseIntensity*np.random.standard_normal()] for i in range(z)] for j in range(y)] for k in range(x)]
     noise = np.asarray(noise)
+    print(noise[0, 0, 0])
     print(noise.shape)
-    noise = np.squeeze(noise.view(np.complex128))
+    noise = 100*np.squeeze(noise.view(np.complex128))
+    print(noise[0, 0, 0])
     
     return noise
 
@@ -146,7 +148,10 @@ def main():
             noisyKspace = addImages(kspace, noise)
 
             # Convert back to physical space
-            noisyVols.append(volumeIFFTAndClean(noisyKspace))
+            newVol = volumeIFFTAndClean(noisyKspace)
+            print(vol[22, 22, 22])
+            print(newVol[22, 22, 22])
+            noisyVols.append(newVol)
 
             print("Added noise to volume", i)
 
