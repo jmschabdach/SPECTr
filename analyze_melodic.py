@@ -123,7 +123,7 @@ def main():
             f.write("subject, registration, correlation, component, tpr, fpr, tnr, fnr\n")
 
     with open(overviewFn, 'a') as f:
-        f.write(subjDir+", "+regtype+", "+str(maxCorr)+", "+str(maxCorrVol)+str(tpr)+", "+str(fpr)+", "+str(tnr)+", "+str(fnr)+"\n")
+        f.write(subjDir+", "+regtype+", "+str(maxCorr[0])+", "+str(maxCorrVol)+", "+str(tpr)+", "+str(fpr)+", "+str(tnr)+", "+str(fnr)+"\n")
 
 
     # Print correlation between correctedData and BOLD data
